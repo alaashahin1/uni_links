@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 
 const MethodChannel _mChannel = const MethodChannel('uni_links/messages');
 const EventChannel _eChannel = const EventChannel('uni_links/events');
-Stream<String> _stream;
+Stream<String>? _stream;
 
 /// Returns a [Future], which completes to one of the following:
 ///
@@ -25,8 +25,8 @@ Future<String> getInitialLink() async {
 ///
 /// If the link is not valid as a URI or URI reference,
 /// a [FormatException] is thrown.
-Future<Uri> getInitialUri() async {
-  final String link = await getInitialLink();
+Future<Uri?> getInitialUri() async {
+  final String? link = await getInitialLink();
   if (link == null) return null;
   return Uri.parse(link);
 }
@@ -47,7 +47,7 @@ Future<Uri> getInitialUri() async {
 ///
 /// If the app was stared by a link intent or user activity the stream will
 /// not emit that initial one - query either the `getInitialLink` instead.
-Stream<String> getLinksStream() {
+Stream<String>? getLinksStream() {
   if (_stream == null) {
     _stream = _eChannel.receiveBroadcastStream().cast<String>();
   }
@@ -64,14 +64,10 @@ Stream<String> getLinksStream() {
 /// If the app was stared by a link intent or user activity the stream will
 /// not emit that initial uri - query either the `getInitialUri` instead.
 Stream<Uri> getUriLinksStream() {
-  return getLinksStream().transform<Uri>(
+  return getLinksStream()!.transform<Uri>(
     new StreamTransformer<String, Uri>.fromHandlers(
       handleData: (String link, EventSink<Uri> sink) {
-        if (link == null) {
-          sink.add(null);
-        } else {
-          sink.add(Uri.parse(link));
-        }
+        sink.add(Uri.parse(link));
       },
     ),
   );
@@ -79,14 +75,14 @@ Stream<Uri> getUriLinksStream() {
 
 ///iOS only, start listening for NFC URI payloads
 void startNFCSession(String dialogMsg) {
-  if(Platform.isIOS) {
+  if (Platform.isIOS) {
     _mChannel.invokeMethod('startNFCSession', dialogMsg);
   }
 }
 
 ///iOS only, stop listening for NFC URI payloads
 void stopNFCSession() {
-  if(Platform.isIOS) {
+  if (Platform.isIOS) {
     _mChannel.invokeMethod('stopNFCSession');
   }
 }

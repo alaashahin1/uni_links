@@ -16,14 +16,14 @@ enum UniLinksType { string, uri }
 
 class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   String _latestLink = 'Unknown';
-  Uri _latestUri;
+  Uri? _latestUri;
 
-  StreamSubscription _sub;
+  StreamSubscription? _sub;
 
-  TabController _tabController;
+  TabController? _tabController;
   UniLinksType _type = UniLinksType.string;
 
-  final List<String> _cmds = getCmds();
+  final List<String>? _cmds = getCmds();
   final TextStyle _cmdStyle = const TextStyle(
       fontFamily: 'Courier', fontSize: 12.0, fontWeight: FontWeight.w700);
   final _scaffoldKey = new GlobalKey<ScaffoldState>();
@@ -32,15 +32,15 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   initState() {
     super.initState();
     _tabController = new TabController(vsync: this, length: 2);
-    _tabController.addListener(_handleTabChange);
+    _tabController!.addListener(_handleTabChange);
     initPlatformState();
   }
 
   @override
   dispose() {
-    if (_sub != null) _sub.cancel();
-    _tabController.removeListener(_handleTabChange);
-    _tabController.dispose();
+    if (_sub != null) _sub!.cancel();
+    _tabController!.removeListener(_handleTabChange);
+    _tabController!.dispose();
     super.dispose();
   }
 
@@ -56,7 +56,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   /// An implementation using a [String] link
   initPlatformStateForStringUniLinks() async {
     // Attach a listener to the links stream
-    _sub = getLinksStream().listen((String link) {
+    _sub = getLinksStream()!.listen((String? link) {
       if (!mounted) return;
       setState(() {
         _latestLink = link ?? 'Unknown';
@@ -74,7 +74,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     });
 
     // Attach a second listener to the stream
-    getLinksStream().listen((String link) {
+    getLinksStream()!.listen((String link) {
       print('got link: $link');
     }, onError: (err) {
       print('got err: $err');
@@ -82,7 +82,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
     // Get the latest link
     String initialLink;
-    Uri initialUri;
+    Uri? initialUri;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       initialLink = await getInitialLink();
@@ -110,7 +110,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   /// An implementation using the [Uri] convenience helpers
   initPlatformStateForUriUniLinks() async {
     // Attach a listener to the Uri links stream
-    _sub = getUriLinksStream().listen((Uri uri) {
+    _sub = getUriLinksStream().listen((Uri? uri) {
       if (!mounted) return;
       setState(() {
         _latestUri = uri;
@@ -125,21 +125,21 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     });
 
     // Attach a second listener to the stream
-    getUriLinksStream().listen((Uri uri) {
+    getUriLinksStream().listen((Uri? uri) {
       print('got uri: ${uri?.path} ${uri?.queryParametersAll}');
     }, onError: (err) {
       print('got err: $err');
     });
 
     // Get the latest Uri
-    Uri initialUri;
-    String initialLink;
+    Uri? initialUri;
+    String? initialLink;
     // Platform messages may fail, so we use a try/catch PlatformException.
     try {
       initialUri = await getInitialUri();
-      print('initial uri: ${initialUri?.path}'
-          ' ${initialUri?.queryParametersAll}');
-      initialLink = initialUri?.toString();
+      print('initial uri: ${initialUri!.path}'
+          ' ${initialUri.queryParametersAll}');
+      initialLink = initialUri.toString();
     } on PlatformException {
       initialUri = null;
       initialLink = 'Failed to get initial uri.';
@@ -155,13 +155,13 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
 
     setState(() {
       _latestUri = initialUri;
-      _latestLink = initialLink;
+      _latestLink = initialLink!;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final queryParams = _latestUri?.queryParametersAll?.entries?.toList();
+    final queryParams = _latestUri?.queryParametersAll.entries.toList();
 
     return new MaterialApp(
       home: new Scaffold(
@@ -194,9 +194,9 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
               children: queryParams?.map((item) {
                     return new ListTile(
                       title: new Text('${item.key}'),
-                      trailing: new Text('${item.value?.join(', ')}'),
+                      trailing: new Text('${item.value.join(', ')}'),
                     );
-                  })?.toList() ??
+                  }).toList() ??
                   <Widget>[
                     new ListTile(
                       dense: true,
@@ -234,7 +234,7 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
                 '(tap on any of the above commands to print it to'
                 ' the console/logger and copy to the device clipboard.)',
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.caption),
+                style: Theme.of(context).textTheme.labelSmall),
           ]
         ].expand((el) => el).toList(),
       );
@@ -250,9 +250,9 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
   }
 
   _handleTabChange() {
-    if (_tabController.indexIsChanging) {
+    if (_tabController!.indexIsChanging) {
       setState(() {
-        _type = UniLinksType.values[_tabController.index];
+        _type = UniLinksType.values[_tabController!.index];
       });
       initPlatformState();
     }
@@ -262,13 +262,13 @@ class _MyAppState extends State<MyApp> with SingleTickerProviderStateMixin {
     print(cmd);
 
     await Clipboard.setData(new ClipboardData(text: cmd));
-    _scaffoldKey.currentState.showSnackBar(new SnackBar(
+    ScaffoldMessenger.of(context).showSnackBar(new SnackBar(
       content: const Text('Copied to Clipboard'),
     ));
   }
 }
 
-List<String> getCmds() {
+List<String>? getCmds() {
   String cmd;
   String cmdSuffix = '';
 
